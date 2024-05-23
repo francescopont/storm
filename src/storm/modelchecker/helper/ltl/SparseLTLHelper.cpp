@@ -17,6 +17,9 @@
 
 #include "storm/exceptions/InvalidPropertyException.h"
 
+#include "storm/transformer/DAProduct.h"
+#include <exceptions/InvalidModelException.h>
+
 namespace storm {
 namespace modelchecker {
 namespace helper {
@@ -319,10 +322,12 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeLTLP
     std::shared_ptr<storm::automata::DeterministicAutomaton> da;
     if (env.modelchecker().isLtl2daToolSet()) {
         // Use the external tool given via ltl2da
+        STORM_LOG_INFO("Using the external version of SPOT" );
         da = storm::automata::LTL2DeterministicAutomaton::ltl2daExternalTool(*ltlFormula, env.modelchecker().getLtl2daTool());
     } else {
         // Use the internal tool (Spot)
         // For nondeterministic models the acceptance condition is transformed into DNF
+        STORM_LOG_INFO("Using the internal version of SPOT" );
         da = storm::automata::LTL2DeterministicAutomaton::ltl2daSpot(*ltlFormula, Nondeterministic);
     }
 
@@ -338,8 +343,102 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeLTLP
             value = storm::utility::one<ValueType>() - value;
         }
     }
-
     return numericResult;
+}
+
+template<typename ValueType, bool Nondeterministic>
+auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment const& env, storm::logic::PathFormula const& formula,
+                                                                                             CheckFormulaCallback const& formulaChecker) -> std::shared_ptr<storm::transformer::DAProduct<productModelType>> {
+
+    if (Nondeterministic){
+        // Replace state-subformulae by atomic propositions (APs)
+        storm::logic::ExtractMaximalStateFormulasVisitor::ApToFormulaMap extracted;
+        std::shared_ptr<storm::logic::Formula> ltlFormula = storm::logic::ExtractMaximalStateFormulasVisitor::extract(formula, extracted);
+        STORM_LOG_ASSERT(ltlFormula->isPathFormula(), "Unexpected formula type.");
+
+        // Compute Satisfaction sets for the APs (which represent the state-subformulae
+        auto apSatSets = computeApSets(extracted, formulaChecker);
+
+        STORM_LOG_INFO("Computing LTL probabilities for formula with " << apSatSets.size() << " atomic proposition(s).");
+
+        storm::logic::PathFormula const& formula1 = ltlFormula->asPathFormula();
+        std::shared_ptr<storm::logic::Formula const> ltlFormula1 = formula1.asSharedPointer();
+
+        STORM_LOG_THROW(this->isOptimizationDirectionSet(),
+                        storm::exceptions::InvalidPropertyException,
+                        "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+
+        STORM_LOG_INFO("Resulting LTL path formula: " << ltlFormula1->toString());
+        STORM_LOG_INFO(" in prefix format: " << ltlFormula1->toPrefixString());
+
+        // Convert LTL formula to a deterministic automaton
+        std::shared_ptr<storm::automata::DeterministicAutomaton> da;
+        if (env.modelchecker().isLtl2daToolSet()) {
+            // Use the external tool given via ltl2da
+            STORM_LOG_INFO("Using the external provided tool" );
+            da = storm::automata::LTL2DeterministicAutomaton::ltl2daExternalTool(*ltlFormula1,
+                                                                                 env.modelchecker().getLtl2daTool());
+        } else {
+            // Use the internal tool (Spot)
+            // For nondeterministic models the acceptance condition is transformed into DNF
+            STORM_LOG_INFO("Using the internal version of SPOT" );
+            da = storm::automata::LTL2DeterministicAutomaton::ltl2daSpot(*ltlFormula1, Nondeterministic);
+        }
+
+        STORM_LOG_INFO("Deterministic automaton for LTL formula has " << da->getNumberOfStates() << " states, "
+                                                                      << da->getAPSet().size()
+                                                                      << " atomic propositions and "
+                                                                      << *da->getAcceptance()->getAcceptanceExpression()
+                                                                      << " as acceptance condition.\n");
+
+        const storm::automata::APSet &apSet = da->getAPSet();
+
+        std::vector<storm::storage::BitVector> statesForAP;
+        for (const std::string &ap: apSet.getAPs()) {
+            auto it = apSatSets.find(ap);
+            STORM_LOG_THROW(it != apSatSets.end(), storm::exceptions::InvalidOperationException,
+                            "Deterministic automaton has AP " << ap << ", does not appear in formula");
+
+            statesForAP.push_back(std::move(it->second));
+        }
+
+        storm::storage::BitVector statesOfInterest;
+
+        if (this->hasRelevantStates()) {
+            statesOfInterest = this->getRelevantStates();
+        } else {
+            // Product from all model states
+            statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
+        }
+
+        STORM_LOG_INFO("Building MDP-DA product with deterministic automaton, starting from "
+                       << statesOfInterest.getNumberOfSetBits() << " model states...");
+        transformer::DAProductBuilder productBuilder(*da, statesForAP);
+
+        auto product = productBuilder.build<productModelType>(this->_transitionMatrix, statesOfInterest);
+
+        STORM_LOG_INFO("Product MDP-DA has "
+                       << product->getProductModel().getNumberOfStates() << " states and "
+                       << product->getProductModel().getNumberOfTransitions()
+                       << " transitions.");
+
+        // Compute accepting states
+        storm::storage::BitVector acceptingStates;
+        STORM_LOG_INFO("Computing Accepting ECs");
+        acceptingStates = computeAcceptingECs(*product->getAcceptance(),
+                                              product->getProductModel().getTransitionMatrix(),
+                                              product->getProductModel().getBackwardTransitions(), product);
+        return product;
+    } else {
+        STORM_LOG_THROW(Nondeterministic,
+                        storm::exceptions::InvalidModelException,
+                        "The model must be an MDP.");
+    }
+
+
+
+
+
 }
 
 template class SparseLTLHelper<double, false>;

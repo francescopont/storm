@@ -32,6 +32,7 @@
 #include "storm/storage/expressions/Expressions.h"
 
 #include "storm/exceptions/InvalidPropertyException.h"
+#include "storm/transformer/DAProduct.h"
 
 namespace storm {
 namespace modelchecker {
@@ -262,6 +263,41 @@ std::unique_ptr<CheckResult> SparseMdpPrctlModelChecker<SparseMdpModelType>::com
         }
 
         return result;
+    }
+}
+
+template<typename SparseMdpModelType>
+std::shared_ptr<storm::transformer::DAProduct<SparseMdpModelType>> SparseMdpPrctlModelChecker<SparseMdpModelType>::buildProductModel(
+    Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask) {
+
+    if constexpr (std::is_same_v<ValueType, storm::Interval>) {
+        STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "We have not yet implemented  LTL with intervals");
+    } else {
+        storm::logic::Formula const& formula = checkTask.getFormula();
+        // checkTask = checkTask.substituteFormula(formula.asStateFormula())
+
+        // storm::logic::StateFormula const& stateFormula = checkTask.getFormula();
+        // checkTask = checkTask.substituteFormula(stateFormula.asProbabilityOperatorFormula());
+
+        // storm::logic::ProbabilityOperatorFormula const& probOpFormula = checkTask.getFormula();
+        // checkTask = checkTask.substituteFormula(probOpFormula.getSubformula());
+
+        // storm::logic::Formula const& formula = checkTask.getFormula();
+        // checkTask = checkTask.substituteFormula(formula.asPathFormula());
+
+        storm::logic::PathFormula const& pathFormula = formula.asStateFormula().asProbabilityOperatorFormula().getSubformula().asPathFormula();
+
+        STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException,
+                        "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+
+        storm::modelchecker::helper::SparseLTLHelper<SolutionType, true> helper(this->getModel().getTransitionMatrix());
+        storm::modelchecker::helper::setInformationFromCheckTaskNondeterministic(helper, checkTask, this->getModel());
+
+        auto formulaChecker = [&](storm::logic::Formula const& formula) {
+            return this->check(env, formula)->asExplicitQualitativeCheckResult().getTruthValuesVector();
+        };
+
+        return helper.buildProductModel(env, pathFormula, formulaChecker);
     }
 }
 

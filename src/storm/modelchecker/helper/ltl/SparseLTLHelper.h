@@ -6,6 +6,7 @@
 #include "storm/models/sparse/Mdp.h"
 #include "storm/storage/SparseMatrix.h"
 #include "storm/transformer/DAProductBuilder.h"
+#include "storm/transformer/DAProduct.h"
 
 namespace storm {
 
@@ -86,6 +87,12 @@ class SparseLTLHelper : public SingleValueModelCheckerHelper<ValueType, storm::m
     std::vector<ValueType> computeLTLProbabilities(Environment const& env, storm::logic::PathFormula const& formula,
                                                    std::map<std::string, storm::storage::BitVector>& apSatSets);
 
+    /*!
+     * Added procedure to export the product between the MDP and the deterministic automaton for the input LTL formula
+     */
+    std::shared_ptr<typename storm::transformer::DAProduct<productModelType>> buildProductModel(const Environment &env, const logic::PathFormula &formula,
+                                                                                                CheckFormulaCallback const& formulaChecker);
+
    private:
     /*!
      * Computes a set S of states that admit a probability 1 strategy of satisfying the given acceptance condition (in DNF).
@@ -115,6 +122,7 @@ class SparseLTLHelper : public SingleValueModelCheckerHelper<ValueType, storm::m
     storm::storage::SparseMatrix<ValueType> const& _transitionMatrix;
 
     boost::optional<storm::modelchecker::helper::internal::SparseLTLSchedulerHelper<ValueType, Nondeterministic>> _schedulerHelper;
+
 };
 }  // namespace helper
 }  // namespace modelchecker

@@ -4,6 +4,8 @@
 #include "storm/models/sparse/Mdp.h"
 #include "storm/solver/MinMaxLinearEquationSolver.h"
 
+#include "storm/transformer/DAProduct.h"
+
 namespace storm {
 
 class Environment;
@@ -54,6 +56,9 @@ class SparseMdpPrctlModelChecker : public SparsePropositionalModelChecker<Sparse
         CheckTask<storm::logic::LongRunAverageRewardFormula, SolutionType> const& checkTask) override;
     virtual std::unique_ptr<CheckResult> computeLTLProbabilities(Environment const& env,
                                                                  CheckTask<storm::logic::PathFormula, SolutionType> const& checkTask) override;
+
+    virtual std::shared_ptr<storm::transformer::DAProduct<SparseMdpModelType>> buildProductModel(
+        Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask) override;
     virtual std::unique_ptr<CheckResult> computeHOAPathProbabilities(Environment const& env,
                                                                      CheckTask<storm::logic::HOAPathFormula, SolutionType> const& checkTask) override;
     virtual std::unique_ptr<CheckResult> checkMultiObjectiveFormula(Environment const& env,
