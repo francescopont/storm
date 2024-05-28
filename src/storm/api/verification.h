@@ -35,7 +35,6 @@
 #include "storm/exceptions/NotSupportedException.h"
 #include "storm/utility/macros.h"
 
-#include "storm/transformer/DAProduct.h"
 
 namespace storm {
 namespace api {
@@ -150,7 +149,7 @@ verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::mod
 }
 
 template<typename ValueType>
-std::shared_ptr<storm::transformer::DAProduct<storm::models::sparse::Mdp<ValueType>>>
+std::shared_ptr<storm::models::sparse::Model<ValueType>>
 buildProductModel(Environment const& env, std::shared_ptr<storm::models::sparse::Mdp<ValueType>> const& mdp,
                   storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task){
     storm::modelchecker::SparseMdpPrctlModelChecker<storm::models::sparse::Mdp<ValueType>> modelchecker(*mdp);

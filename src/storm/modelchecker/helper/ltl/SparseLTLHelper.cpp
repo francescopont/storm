@@ -16,8 +16,6 @@
 #include "storm/storage/StronglyConnectedComponentDecomposition.h"
 
 #include "storm/exceptions/InvalidPropertyException.h"
-
-#include "storm/transformer/DAProduct.h"
 #include <exceptions/InvalidModelException.h>
 
 namespace storm {
@@ -348,7 +346,7 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeLTLP
 
 template<typename ValueType, bool Nondeterministic>
 auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment const& env, storm::logic::PathFormula const& formula,
-                                                                                             CheckFormulaCallback const& formulaChecker) -> std::shared_ptr<storm::transformer::DAProduct<productModelType>> {
+                                                                                             CheckFormulaCallback const& formulaChecker) -> std::shared_ptr<productModelType> {
 
     if (Nondeterministic){
         // Replace state-subformulae by atomic propositions (APs)
@@ -428,7 +426,8 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
         acceptingStates = computeAcceptingECs(*product->getAcceptance(),
                                               product->getProductModel().getTransitionMatrix(),
                                               product->getProductModel().getBackwardTransitions(), product);
-        return product;
+
+        return std::make_shared<productModelType>(product->getProductModel());
     } else {
         STORM_LOG_THROW(Nondeterministic,
                         storm::exceptions::InvalidModelException,

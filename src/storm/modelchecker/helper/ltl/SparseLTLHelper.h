@@ -90,8 +90,7 @@ class SparseLTLHelper : public SingleValueModelCheckerHelper<ValueType, storm::m
     /*!
      * Added procedure to export the product between the MDP and the deterministic automaton for the input LTL formula
      */
-    std::shared_ptr<typename storm::transformer::DAProduct<productModelType>> buildProductModel(const Environment &env, const logic::PathFormula &formula,
-                                                                                                CheckFormulaCallback const& formulaChecker);
+    std::shared_ptr<productModelType> buildProductModel(const Environment &env, const logic::PathFormula &formula, CheckFormulaCallback const& formulaChecker);
 
    private:
     /*!

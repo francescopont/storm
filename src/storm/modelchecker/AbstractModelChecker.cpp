@@ -147,7 +147,7 @@ std::unique_ptr<CheckResult> AbstractModelChecker<ModelType>::computeLTLProbabil
 }
 
 template<typename ModelType>
-std::shared_ptr<storm::transformer::DAProduct<ModelType>> AbstractModelChecker<ModelType>::buildProductModel(
+std::shared_ptr<ModelType> AbstractModelChecker<ModelType>::buildProductModel(
     Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask) {
     STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Abstract model checking does not support exporting MDP-DA product");
 }
