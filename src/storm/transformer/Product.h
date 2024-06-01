@@ -28,6 +28,18 @@ class Product {
         return productModel;
     }
 
+    std::string getProductStateOfInterestLabel() {
+        return productStateOfInterestLabel;
+    }
+
+    product_state_to_product_index_map getProductStateToProductIndex(){
+        return productStateToProductIndex;
+    }
+
+    product_index_to_product_state_vector& getProductIndexToProductState(){
+        return productIndexToProductState;
+    }
+
     state_type getModelState(state_type productStateIndex) const {
         return productIndexToProductState.at(productStateIndex).first;
     }

@@ -24,8 +24,8 @@ include(ProcessorCount)
 ##	CMake options of Storm
 ##
 #############################################################
-option(STORM_DEVELOPER "Sets whether the development mode is used." OFF)
-option(STORM_ALLWARNINGS "Compile with even more warnings" OFF)
+option(STORM_DEVELOPER "Sets whether the development mode is used." ON)
+option(STORM_ALLWARNINGS "Compile with even more warnings" ON)
 option(STORM_USE_LTO "Sets whether link-time optimizations are enabled." ON)
 MARK_AS_ADVANCED(STORM_USE_LTO)
 option(STORM_USE_THIN_LTO "Sets whether thin link-time optimizations are enabled (faster compile times than normal LTO)." OFF)

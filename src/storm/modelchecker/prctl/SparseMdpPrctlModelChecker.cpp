@@ -31,8 +31,6 @@
 #include "storm/exceptions/InvalidStateException.h"
 #include "storm/storage/expressions/Expressions.h"
 
-#include "storm/exceptions/InvalidPropertyException.h"
-
 namespace storm {
 namespace modelchecker {
 template<typename SparseMdpModelType>
@@ -266,7 +264,7 @@ std::unique_ptr<CheckResult> SparseMdpPrctlModelChecker<SparseMdpModelType>::com
 }
 
 template<typename SparseMdpModelType>
-std::shared_ptr<SparseMdpModelType> SparseMdpPrctlModelChecker<SparseMdpModelType>::buildProductModel(
+std::shared_ptr<storm::modelchecker::helper::ProductModel<SparseMdpModelType>> SparseMdpPrctlModelChecker<SparseMdpModelType>::buildProductModel(
     Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask) {
 
     if constexpr (std::is_same_v<ValueType, storm::Interval>) {

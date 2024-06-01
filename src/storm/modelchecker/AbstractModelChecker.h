@@ -6,6 +6,7 @@
 #include "storm/logic/Formulas.h"
 #include "storm/modelchecker/CheckTask.h"
 #include "storm/solver/OptimizationDirection.h"
+#include "storm/modelchecker/helper/ltl/ProductModel.h"
 
 namespace storm {
 
@@ -71,7 +72,8 @@ class AbstractModelChecker {
                                                                      CheckTask<storm::logic::HOAPathFormula, SolutionType> const& checkTask);
     virtual std::unique_ptr<CheckResult> computeLTLProbabilities(Environment const& env, CheckTask<storm::logic::PathFormula, SolutionType> const& checkTask);
 
-    virtual std::shared_ptr<ModelType> buildProductModel(Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask);
+    virtual std::shared_ptr<storm::modelchecker::helper::ProductModel<ModelType>>
+        buildProductModel(Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask);
 
     std::unique_ptr<CheckResult> computeStateFormulaProbabilities(Environment const& env, CheckTask<storm::logic::Formula, SolutionType> const& checkTask);
 

@@ -54,7 +54,7 @@ class SparseMdpPrctlModelChecker : public SparsePropositionalModelChecker<Sparse
         CheckTask<storm::logic::LongRunAverageRewardFormula, SolutionType> const& checkTask) override;
     virtual std::unique_ptr<CheckResult> computeLTLProbabilities(Environment const& env,
                                                                  CheckTask<storm::logic::PathFormula, SolutionType> const& checkTask) override;
-    virtual std::shared_ptr<SparseMdpModelType> buildProductModel(Environment const& env,
+    virtual std::shared_ptr<storm::modelchecker::helper::ProductModel<SparseMdpModelType>> buildProductModel(Environment const& env,
                                                                   CheckTask<storm::logic::Formula, SolutionType> const& checkTask) override;
     virtual std::unique_ptr<CheckResult> computeHOAPathProbabilities(Environment const& env,
                                                                      CheckTask<storm::logic::HOAPathFormula, SolutionType> const& checkTask) override;

@@ -16,7 +16,7 @@
 #include "storm/storage/StronglyConnectedComponentDecomposition.h"
 
 #include "storm/exceptions/InvalidPropertyException.h"
-#include <exceptions/InvalidModelException.h>
+#include "storm/exceptions/InvalidModelException.h"
 
 namespace storm {
 namespace modelchecker {
@@ -346,7 +346,8 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeLTLP
 
 template<typename ValueType, bool Nondeterministic>
 auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment const& env, storm::logic::PathFormula const& formula,
-                                                                                             CheckFormulaCallback const& formulaChecker) -> std::shared_ptr<productModelType> {
+                                                                     CheckFormulaCallback const& formulaChecker)
+    -> typename ProductModel<productModelType>::ptr {
 
     if (Nondeterministic){
         // Replace state-subformulae by atomic propositions (APs)
@@ -357,7 +358,7 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
         // Compute Satisfaction sets for the APs (which represent the state-subformulae
         auto apSatSets = computeApSets(extracted, formulaChecker);
 
-        STORM_LOG_INFO("Computing LTL probabilities for formula with " << apSatSets.size() << " atomic proposition(s).");
+        STORM_LOG_INFO("Computing product model for formula with " << apSatSets.size() << " atomic proposition(s).");
 
         storm::logic::PathFormula const& formula1 = ltlFormula->asPathFormula();
         std::shared_ptr<storm::logic::Formula const> ltlFormula1 = formula1.asSharedPointer();
@@ -427,16 +428,17 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
                                               product->getProductModel().getTransitionMatrix(),
                                               product->getProductModel().getBackwardTransitions(), product);
 
-        return std::make_shared<productModelType>(product->getProductModel());
+
+        return typename ProductModel<productModelType>::ptr(new ProductModel<productModelType>(std::move(product->getProductModel()),
+                                                                                               std::move(product->getProductStateOfInterestLabel()),
+                                                                                               std::move(product->getProductStateToProductIndex()),
+                                                                                               std::move(product->getProductIndexToProductState()),
+                                                                                               std::move(acceptingStates)));
     } else {
         STORM_LOG_THROW(Nondeterministic,
                         storm::exceptions::InvalidModelException,
                         "The model must be an MDP.");
     }
-
-
-
-
 
 }
 
