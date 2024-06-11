@@ -212,7 +212,6 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeDAPr
     }
 
     storm::storage::BitVector statesOfInterest;
-
     if (this->hasRelevantStates()) {
         statesOfInterest = this->getRelevantStates();
     } else {
@@ -402,13 +401,7 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
         }
 
         storm::storage::BitVector statesOfInterest;
-
-        if (this->hasRelevantStates()) {
-            statesOfInterest = this->getRelevantStates();
-        } else {
-            // Product from all model states
-            statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
-        }
+        statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
 
         STORM_LOG_INFO("Building MDP-DA product with deterministic automaton, starting from "
                        << statesOfInterest.getNumberOfSetBits() << " model states...");
@@ -430,7 +423,6 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
 
 
         return typename ProductModel<productModelType>::ptr(new ProductModel<productModelType>(std::move(product->getProductModel()),
-                                                                                               std::move(product->getProductStateOfInterestLabel()),
                                                                                                std::move(product->getProductStateToProductIndex()),
                                                                                                std::move(product->getProductIndexToProductState()),
                                                                                                std::move(acceptingStates)));

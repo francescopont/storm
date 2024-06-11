@@ -20,10 +20,9 @@ class ProductModel {
     typedef std::map<product_state_type, state_type> product_state_to_product_index_map;
     typedef std::vector<product_state_type> product_index_to_product_state_vector;
 
-    ProductModel(Model&& productModel, std::string&& productStateOfInterestLabel, product_state_to_product_index_map&& productStateToProductIndex,
-            product_index_to_product_state_vector&& productIndexToProductState, storm::storage::BitVector&& acceptingStates)
+    ProductModel(Model&& productModel, product_state_to_product_index_map&& productStateToProductIndex,
+                 product_index_to_product_state_vector&& productIndexToProductState, storm::storage::BitVector&& acceptingStates)
         : productModel(productModel),
-          productStateOfInterestLabel(productStateOfInterestLabel),
           productStateToProductIndex(productStateToProductIndex),
           productIndexToProductState(productIndexToProductState),
           acceptingStates(acceptingStates) {}
@@ -37,10 +36,6 @@ class ProductModel {
 
     Model& getModel(){
         return productModel;
-    }
-
-    std::string& getProductStateOfInterestLabel() {
-        return productStateOfInterestLabel;
     }
 
     product_state_to_product_index_map& getProductStateToProductIndex(){
@@ -94,20 +89,6 @@ class ProductModel {
         return projectToOriginalModel(originalModel.getNumberOfStates(), prodValues);
     }
 
-    template<typename ValueType>
-    std::vector<ValueType> projectToOriginalModel(std::size_t numberOfStates, const std::vector<ValueType>& prodValues) {
-        std::vector<ValueType> origValues(numberOfStates);
-        for (state_type productState : productModel.getStateLabeling().getStates(productStateOfInterestLabel)) {
-            state_type originalState = getModelState(productState);
-            origValues.at(originalState) = prodValues.at(productState);
-        }
-        return origValues;
-    }
-
-    const storm::storage::BitVector& getStatesOfInterest() const {
-        return productModel.getStates(productStateOfInterestLabel);
-    }
-
     void printMapping(std::ostream& out) const {
         out << "Mapping index -> product state\n";
         for (std::size_t i = 0; i < productIndexToProductState.size(); i++) {
@@ -118,7 +99,6 @@ class ProductModel {
    private:
 
     Model productModel;
-    std::string productStateOfInterestLabel;
     product_state_to_product_index_map productStateToProductIndex;
     product_index_to_product_state_vector productIndexToProductState;
     storm::storage::BitVector acceptingStates;

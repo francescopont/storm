@@ -103,6 +103,7 @@ class Formula : public std::enable_shared_from_this<Formula> {
 
     bool isInFragment(FragmentSpecification const& fragment) const;
     FormulaInformation info(bool recurseIntoOperators = true) const;
+    bool isComplexPathFormula() const;
 
     boost::any accept(FormulaVisitor const& visitor) const;
     virtual boost::any accept(FormulaVisitor const& visitor, boost::any const& data) const = 0;

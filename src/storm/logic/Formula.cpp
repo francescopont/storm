@@ -202,6 +202,10 @@ FormulaInformation Formula::info(bool recurseIntoOperators) const {
     return FormulaInformationVisitor::getInformation(*this, recurseIntoOperators);
 }
 
+bool Formula::isComplexPathFormula() const{
+    return FormulaInformationVisitor::getInformation(*this, false).containsComplexPathFormula();
+}
+
 std::shared_ptr<Formula const> Formula::getTrueFormula() {
     return std::shared_ptr<Formula const>(new BooleanLiteralFormula(true));
 }
