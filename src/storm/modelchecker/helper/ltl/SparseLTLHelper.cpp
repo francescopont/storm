@@ -423,7 +423,6 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
 
 
         return typename ProductModel<productModelType>::ptr(new ProductModel<productModelType>(std::move(product->getProductModel()),
-                                                                                               std::move(product->getProductStateToProductIndex()),
                                                                                                std::move(product->getProductIndexToProductState()),
                                                                                                std::move(acceptingStates)));
     } else {

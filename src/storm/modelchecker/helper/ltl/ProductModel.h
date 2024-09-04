@@ -17,13 +17,11 @@ class ProductModel {
 
     typedef storm::storage::sparse::state_type state_type;
     typedef std::pair<state_type, state_type> product_state_type;
-    typedef std::map<product_state_type, state_type> product_state_to_product_index_map;
     typedef std::vector<product_state_type> product_index_to_product_state_vector;
 
-    ProductModel(Model&& productModel, product_state_to_product_index_map&& productStateToProductIndex,
+    ProductModel(Model&& productModel,
                  product_index_to_product_state_vector&& productIndexToProductState, storm::storage::BitVector&& acceptingStates)
         : productModel(productModel),
-          productStateToProductIndex(productStateToProductIndex),
           productIndexToProductState(productIndexToProductState),
           acceptingStates(acceptingStates) {}
 
@@ -38,10 +36,6 @@ class ProductModel {
         return productModel;
     }
 
-    product_state_to_product_index_map& getProductStateToProductIndex(){
-        return productStateToProductIndex;
-    }
-
     product_index_to_product_state_vector& getProductIndexToProductState(){
         return productIndexToProductState;
     }
@@ -52,14 +46,6 @@ class ProductModel {
 
     state_type getAutomatonState(state_type productStateIndex) const {
         return productIndexToProductState.at(productStateIndex).second;
-    }
-
-    state_type getProductStateIndex(state_type modelState, state_type automatonState) const {
-        return productStateToProductIndex.at(product_state_type(modelState, automatonState));
-    }
-
-    bool isValidProductState(state_type modelState, state_type automatonState) const {
-        return (productStateToProductIndex.count(product_state_type(modelState, automatonState)) > 0);
     }
 
     storm::storage::BitVector liftFromAutomaton(const storm::storage::BitVector& vector) const {
@@ -99,7 +85,6 @@ class ProductModel {
    private:
 
     Model productModel;
-    product_state_to_product_index_map productStateToProductIndex;
     product_index_to_product_state_vector productIndexToProductState;
     storm::storage::BitVector acceptingStates;
 
