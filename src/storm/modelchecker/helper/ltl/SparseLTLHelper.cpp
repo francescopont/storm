@@ -401,7 +401,12 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
         }
 
         storm::storage::BitVector statesOfInterest;
-        statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
+        if (this->hasRelevantStates()) {
+            statesOfInterest = this->getRelevantStates();
+        } else {
+            // Product from all model states
+            statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
+        }
 
         STORM_LOG_INFO("Building MDP-DA product with deterministic automaton, starting from "
                        << statesOfInterest.getNumberOfSetBits() << " model states...");
