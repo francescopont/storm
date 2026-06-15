@@ -271,6 +271,10 @@ std::shared_ptr<storm::modelchecker::helper::ProductModel<SparseMdpModelType>> S
         STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "We have not yet implemented  LTL with intervals");
     } else {
         storm::logic::Formula const& formula = checkTask.getFormula();
+        storm::logic::PathFormula const& pathFormula = formula.isReachabilityRewardFormula()
+            ? formula.asStateFormula().asReachabilityRewardFormula().getSubformula().asPathFormula()
+            : formula.asStateFormula().asProbabilityOperatorFormula().getSubformula().asPathFormula();
+
         // checkTask = checkTask.substituteFormula(formula.asStateFormula())
 
         // storm::logic::StateFormula const& stateFormula = checkTask.getFormula();
@@ -282,7 +286,7 @@ std::shared_ptr<storm::modelchecker::helper::ProductModel<SparseMdpModelType>> S
         // storm::logic::Formula const& formula = checkTask.getFormula();
         // checkTask = checkTask.substituteFormula(formula.asPathFormula());
 
-        storm::logic::PathFormula const& pathFormula = formula.asStateFormula().asProbabilityOperatorFormula().getSubformula().asPathFormula();
+
 
         STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException,
                         "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
