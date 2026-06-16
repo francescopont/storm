@@ -32,11 +32,13 @@ class DAProductBuilder {
     }
 
     template<typename Model>
-    static typename ProductModel<Model>::ptr exportProductModel(const typename DAProduct< Model>::ptr product, const storm::storage::BitVector& acceptingStates) {
+    static typename ProductModel<Model>::ptr exportProductModel(const typename DAProduct< Model>::ptr product, const storm::storage::BitVector& acceptingStates,
+                                                                const storm::storage::BitVector& sinkStates) {
         typename ProductModel<Model>::ptr shrinkedModel = ProductBuilder<Model>::shrinkAndExportProductModel(product->getProductModel().getTransitionMatrix(),
-                                                                                                      product->getStatesOfInterest(),
-                                                                                                      product->getProductIndexToProductState(),
-                                                                                                      acceptingStates);
+                                                                                                             product->getStatesOfInterest(),
+                                                                                                             product->getProductIndexToProductState(),
+                                                                                                             acceptingStates,
+                                                                                                             sinkStates);
         return shrinkedModel;
     }
 

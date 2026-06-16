@@ -132,7 +132,8 @@ class ProductBuilder {
     static typename ProductModel<Model>::ptr shrinkAndExportProductModel(const matrix_type& originalMatrix,
                                                                          const storm::storage::BitVector& statesOfInterest,
                                                                          std::vector<product_state_type> const& oldProductIndexToProductState,
-                                                                         const storm::storage::BitVector& acceptingStates) {
+                                                                         const storm::storage::BitVector& acceptingStates,
+                                                                         const storm::storage::BitVector& sinkStates) {
 
         bool deterministic = originalMatrix.hasTrivialRowGrouping();
         state_type nextState = 0;
@@ -147,6 +148,7 @@ class ProductBuilder {
         std::deque<product_state_type> todo;
         for (state_type oldIndex : statesOfInterest) {
             STORM_LOG_ASSERT(!acceptingStates.get(oldIndex), "An initial state cannot be accepting.");
+            STORM_LOG_ASSERT(!sinkStates.get(oldIndex), "An initial state almost surely under the best scheduler doesn't reach the target.");
             product_state_type s_q = oldProductIndexToProductState.at(oldIndex);
             productIndexToProductState.push_back(s_q);
             state_type newIndex = nextState++;
@@ -156,13 +158,22 @@ class ProductBuilder {
             todo.push_back(t_p);
         }
 
-        // handling the accepting sink state
+        // handling the accepting state
         state_type oldIndex = acceptingStates.getNextSetIndex(0); // just as a convention
-        product_state_type s_q = oldProductIndexToProductState.at(oldIndex);
-        productIndexToProductState.push_back(s_q);
-        state_type sink_accepting_state = nextState++;
-        stateRemapping[oldIndex] = sink_accepting_state;
-        product_state_type t_err(sink_accepting_state, oldIndex);
+        product_state_type s_acc = oldProductIndexToProductState.at(oldIndex);
+        productIndexToProductState.push_back(s_acc);
+        state_type accepting_state = nextState++;
+        stateRemapping[oldIndex] = accepting_state;
+        product_state_type t_acc(accepting_state, oldIndex);
+        todo.push_back(t_acc);
+
+        // handling the sink state
+        state_type oldSinkIndex = sinkStates.getNextSetIndex(0); // just as a convention
+        product_state_type s_sink = oldProductIndexToProductState.at(oldSinkIndex);
+        productIndexToProductState.push_back(s_sink);
+        state_type sink_state = nextState++;
+        stateRemapping[oldSinkIndex] = sink_state;
+        product_state_type t_err(sink_state, oldSinkIndex);
         todo.push_back(t_err);
 
         storm::storage::SparseMatrixBuilder<typename Model::ValueType> builder(0, 0, 0, false, deterministic ? false : true, 0);
@@ -180,7 +191,7 @@ class ProductBuilder {
                     state_type oldTo = entry.getColumn();
 
                     auto it = stateRemapping.find(oldTo);
-                    if (it == stateRemapping.end() && (!acceptingStates.get(oldTo))) {
+                    if (it == stateRemapping.end() && (!acceptingStates.get(oldTo)) && (!sinkStates.get(oldTo))) {
                         product_state_type t_p = oldProductIndexToProductState.at(oldTo);
                         productIndexToProductState.push_back(t_p);
                         state_type to = nextState++;
@@ -189,11 +200,13 @@ class ProductBuilder {
                         todo.push_back(t_tomc);
                         builder.addNextValue(from, to, entry.getValue());
 
-                    } else if (!acceptingStates.get(oldTo)) {
+                    } else if (!acceptingStates.get(oldTo) && (!sinkStates.get(oldTo))) {
                         state_type to = it->second;
                         builder.addNextValue(from, to,entry.getValue());
-                    } else {
-                        builder.addNextValue(from, sink_accepting_state,entry.getValue());
+                    } else if (acceptingStates.get(oldTo)){
+                        builder.addNextValue(from, accepting_state,entry.getValue());
+                    } else if (sinkStates.get(oldTo)){
+                        builder.addNextValue(from, sink_state,entry.getValue());
                     }
                 }
             } else {
@@ -204,7 +217,7 @@ class ProductBuilder {
                     for (auto const& entry : row) {
                         state_type oldTo = entry.getColumn();
                         auto it = stateRemapping.find(oldTo);
-                        if (it == stateRemapping.end() && (!acceptingStates.get(oldTo))) {
+                        if (it == stateRemapping.end() && (!acceptingStates.get(oldTo)) && (!sinkStates.get(oldTo))) {
                             //std::cout << "Pushing back state: ";
                             //std::cout << oldTo << '\n';
                             product_state_type t_p = oldProductIndexToProductState.at(oldTo);
@@ -214,11 +227,13 @@ class ProductBuilder {
                             product_state_type t_tomdp(to, oldTo);
                             todo.push_back(t_tomdp);
                             builder.addNextValue(curRow, to, entry.getValue());
-                        } else if (!acceptingStates.get(oldTo)) {
+                        } else if (!acceptingStates.get(oldTo) && (!sinkStates.get(oldTo))) {
                             state_type to = it->second;
                             builder.addNextValue(curRow, to, entry.getValue());
-                        } else {
-                            builder.addNextValue(curRow, sink_accepting_state, entry.getValue());
+                        } else if (acceptingStates.get(oldTo)){
+                            builder.addNextValue(curRow, accepting_state,entry.getValue());
+                        } else if (sinkStates.get(oldTo)){
+                            builder.addNextValue(curRow, sink_state,entry.getValue());
                         }
                     }
                     curRow++;
@@ -226,7 +241,7 @@ class ProductBuilder {
             }
         }
         state_type numberOfProductStates = nextState;
-        
+
         Model shrinked_product(builder.build(), storm::models::sparse::StateLabeling(numberOfProductStates));
         storm::storage::BitVector productStatesOfInterest(shrinked_product.getNumberOfStates());
         for (auto& s : prodInitial) {
@@ -235,7 +250,7 @@ class ProductBuilder {
         std::string prodSoiLabel = shrinked_product.getStateLabeling().addUniqueLabel("soi", productStatesOfInterest);
 
         return typename ProductModel<Model>::ptr(
-            new ProductModel<Model>(std::move(shrinked_product), std::move(productIndexToProductState), sink_accepting_state));
+            new ProductModel<Model>(std::move(shrinked_product), std::move(productIndexToProductState), accepting_state));
     }
 };
 }  // namespace transformer

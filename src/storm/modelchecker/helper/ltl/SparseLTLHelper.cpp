@@ -428,7 +428,34 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
                                               product->getProductModel().getTransitionMatrix(),
                                               product->getProductModel().getBackwardTransitions(), product);
 
-        typename transformer::ProductModel<productModelType>::ptr pm = productBuilder.exportProductModel<productModelType>(product, acceptingStates);
+        // compute states that, even under the maximizing scheduler, have probability zero of reaching the an accepting state
+        storm::storage::BitVector bvTrue(product->getProductModel().getNumberOfStates(), true);
+        storm::storage::BitVector soiProduct(product->getProductModel().getNumberOfStates(), true);
+
+        // Create goal for computeUntilProbabilities, always compute maximizing probabilities
+        storm::solver::SolveGoal<ValueType> solveGoalProduct;
+        solveGoalProduct = storm::solver::SolveGoal<ValueType>(OptimizationDirection::Maximize);
+        solveGoalProduct.setRelevantValues(std::move(soiProduct));
+        MDPSparseModelCheckingHelperReturnType<ValueType> prodCheckResult =
+            storm::modelchecker::helper::SparseMdpPrctlHelper<ValueType>::computeUntilProbabilities(
+                env, std::move(solveGoalProduct), product->getProductModel().getTransitionMatrix(), product->getProductModel().getBackwardTransitions(), bvTrue,
+                acceptingStates, true, // do a qualitative question?
+                false  // Whether to create memoryless scheduler for the Model-DA Product.
+            );
+        std::vector<ValueType> prodNumericResult;
+        prodNumericResult = std::move(prodCheckResult.values);
+
+        storm::storage::BitVector sinkStates(product->getProductModel().getTransitionMatrix().getRowGroupCount(), false);
+
+        std::size_t state_id = 0;
+        for (auto result : prodNumericResult){
+            if (result == storm::utility::zero<ValueType>()){
+                sinkStates.set(state_id);
+            }
+            state_id++;
+        }
+
+        typename transformer::ProductModel<productModelType>::ptr pm = productBuilder.exportProductModel<productModelType>(product, acceptingStates, sinkStates);
         return pm;
     } else {
         STORM_LOG_THROW(Nondeterministic,
