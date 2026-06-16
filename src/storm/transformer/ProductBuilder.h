@@ -4,6 +4,7 @@
 #include "storm/storage/BitVector.h"
 #include "storm/storage/SparseMatrix.h"
 #include "storm/transformer/ProductModel.h"
+#include "storm/utility/ConstantsComparator.h"
 
 #include <deque>
 #include <map>
@@ -140,6 +141,7 @@ class ProductBuilder {
         std::vector<product_state_type> productIndexToProductState;
         std::map<state_type, state_type> stateRemapping;
         std::vector<state_type> prodInitial;
+        storm::utility::ConstantsComparator<typename Model::ValueType> comparator;
 
         // use deque for todo so that the states are handled in the order
         // of their index in the product model, which is required due to the
@@ -187,9 +189,10 @@ class ProductBuilder {
 
             if (deterministic) {
                 typename matrix_type::const_rows row = originalMatrix.getRow(oldFrom);
+                typename Model::ValueType acc_sink = storm::utility::zero<typename Model::ValueType>();
+                typename Model::ValueType acc_acc = storm::utility::zero<typename Model::ValueType>();
                 for (auto const& entry : row) {
                     state_type oldTo = entry.getColumn();
-
                     auto it = stateRemapping.find(oldTo);
                     if (it == stateRemapping.end() && (!acceptingStates.get(oldTo)) && (!sinkStates.get(oldTo))) {
                         product_state_type t_p = oldProductIndexToProductState.at(oldTo);
@@ -204,22 +207,29 @@ class ProductBuilder {
                         state_type to = it->second;
                         builder.addNextValue(from, to,entry.getValue());
                     } else if (acceptingStates.get(oldTo)){
-                        builder.addNextValue(from, accepting_state,entry.getValue());
+                        acc_acc += entry.getValue();
                     } else if (sinkStates.get(oldTo)){
-                        builder.addNextValue(from, sink_state,entry.getValue());
+                        acc_sink += entry.getValue();
+
                     }
+                }
+                if (!comparator.isEqual(acc_sink,storm::utility::zero<typename Model::ValueType>())){
+                    builder.addNextValue(from, sink_state,acc_sink);
+                }
+                if (!comparator.isEqual(acc_acc,storm::utility::zero<typename Model::ValueType>())){
+                    builder.addNextValue(from, sink_state,acc_acc);
                 }
             } else {
                 std::size_t numRows = originalMatrix.getRowGroupSize(oldFrom);
                 builder.newRowGroup(curRow);
                 for (std::size_t i = 0; i < numRows; i++) {
                     auto const& row = originalMatrix.getRow(oldFrom, i);
+                    typename Model::ValueType acc_sink = storm::utility::zero<typename Model::ValueType>();
+                    typename Model::ValueType acc_acc = storm::utility::zero<typename Model::ValueType>();
                     for (auto const& entry : row) {
                         state_type oldTo = entry.getColumn();
                         auto it = stateRemapping.find(oldTo);
                         if (it == stateRemapping.end() && (!acceptingStates.get(oldTo)) && (!sinkStates.get(oldTo))) {
-                            //std::cout << "Pushing back state: ";
-                            //std::cout << oldTo << '\n';
                             product_state_type t_p = oldProductIndexToProductState.at(oldTo);
                             productIndexToProductState.push_back(t_p);
                             state_type to = nextState++;
@@ -231,10 +241,17 @@ class ProductBuilder {
                             state_type to = it->second;
                             builder.addNextValue(curRow, to, entry.getValue());
                         } else if (acceptingStates.get(oldTo)){
-                            builder.addNextValue(curRow, accepting_state,entry.getValue());
+                            acc_acc += entry.getValue();
                         } else if (sinkStates.get(oldTo)){
-                            builder.addNextValue(curRow, sink_state,entry.getValue());
+                            acc_sink += entry.getValue();
+
                         }
+                    }
+                    if (!comparator.isEqual(acc_sink,storm::utility::zero<typename Model::ValueType>())){
+                        builder.addNextValue(curRow, sink_state,acc_sink);
+                    }
+                    if (!comparator.isEqual(acc_acc,storm::utility::zero<typename Model::ValueType>())){
+                        builder.addNextValue(curRow, accepting_state,acc_acc);
                     }
                     curRow++;
                 }
