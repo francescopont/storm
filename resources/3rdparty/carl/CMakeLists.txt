@@ -8,7 +8,7 @@ message(STATUS "Carl-Storm - Storm 3rdparty binary dir: ${STORM_3RDPARTY_BINARY_
 
 ExternalProject_Add(carl-config
 	GIT_REPOSITORY https://github.com/moves-rwth/carl-storm
-	GIT_TAG master
+	GIT_TAG 14.28
 	PREFIX here
 	SOURCE_DIR source_dir
 	BINARY_DIR ${STORM_3RDPARTY_BINARY_DIR}/carl

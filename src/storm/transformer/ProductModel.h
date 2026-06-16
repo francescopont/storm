@@ -44,32 +44,6 @@ class ProductModel {
         return acceptingStates;
     }
 
-    state_type getAutomatonState(state_type productStateIndex) const {
-        return productIndexToProductState.at(productStateIndex).second;
-    }
-
-    storm::storage::BitVector liftFromAutomaton(const storm::storage::BitVector& vector) const {
-        state_type n = productModel.getNumberOfStates();
-        storm::storage::BitVector lifted(n, false);
-        for (state_type s = 0; s < n; s++) {
-            if (vector.get(getAutomatonState(s))) {
-                lifted.set(s);
-            }
-        }
-        return lifted;
-    }
-
-    storm::storage::BitVector liftFromModel(const storm::storage::BitVector& vector) const {
-        state_type n = productModel.getNumberOfStates();
-        storm::storage::BitVector lifted(n, false);
-        for (state_type s = 0; s < n; s++) {
-            if (vector.get(getModelState(s))) {
-                lifted.set(s);
-            }
-        }
-        return lifted;
-    }
-
     template<typename ValueType>
     std::vector<ValueType> projectToOriginalModel(const Model& originalModel, const std::vector<ValueType>& prodValues) {
         return projectToOriginalModel(originalModel.getNumberOfStates(), prodValues);

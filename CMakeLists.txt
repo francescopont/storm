@@ -40,7 +40,7 @@ option(STORM_USE_INTELTBB "Sets whether the Intel TBB libraries should be used."
 option(STORM_USE_GUROBI "Sets whether Gurobi should be used." OFF)
 option(STORM_USE_SOPLEX "Sets whether Soplex should be used." OFF)
 set(STORM_CARL_DIR_HINT "" CACHE STRING "A hint where the preferred CArL version can be found. If CArL cannot be found there, it is searched in the OS's default paths.")
-option(STORM_FORCE_SHIPPED_CARL "Sets whether the shipped version of carl is to be used no matter whether carl is found or not." OFF)
+option(STORM_FORCE_SHIPPED_CARL "Sets whether the shipped version of carl is to be used no matter whether carl is found or not." ON)
 MARK_AS_ADVANCED(STORM_FORCE_SHIPPED_CARL)
 option(USE_SMTRAT "Sets whether SMT-RAT should be included." OFF)
 mark_as_advanced(USE_SMTRAT)
