@@ -7,8 +7,7 @@
 #include "storm/transformer/Product.h"
 
 namespace storm {
-namespace modelchecker {
-namespace helper {
+namespace transformer{
 template<typename Model>
 class ProductModel {
    public:
@@ -20,17 +19,13 @@ class ProductModel {
     typedef std::vector<product_state_type> product_index_to_product_state_vector;
 
     ProductModel(Model&& productModel,
-                 product_index_to_product_state_vector&& productIndexToProductState, storm::storage::BitVector&& acceptingStates)
+                 product_index_to_product_state_vector&& productIndexToProductState, state_type acceptingState)
         : productModel(productModel),
           productIndexToProductState(productIndexToProductState),
-          acceptingStates(acceptingStates) {}
+          acceptingState(acceptingState) {}
 
     ProductModel(ProductModel<Model>&& product) = default;
     ProductModel& operator=(ProductModel<Model>&& product) = default;
-
-    state_type getModelState(state_type productStateIndex) const {
-        return productIndexToProductState.at(productStateIndex).first;
-    }
 
     Model& getModel(){
         return productModel;
@@ -40,13 +35,8 @@ class ProductModel {
         return productIndexToProductState;
     }
 
-    storm::storage::BitVector& getAcceptingStates(){
-        return acceptingStates;
-    }
-
-    template<typename ValueType>
-    std::vector<ValueType> projectToOriginalModel(const Model& originalModel, const std::vector<ValueType>& prodValues) {
-        return projectToOriginalModel(originalModel.getNumberOfStates(), prodValues);
+    state_type& getAcceptingState(){
+        return acceptingState;
     }
 
     void printMapping(std::ostream& out) const {
@@ -57,13 +47,10 @@ class ProductModel {
     }
 
    private:
-
     Model productModel;
     product_index_to_product_state_vector productIndexToProductState;
-    storm::storage::BitVector acceptingStates;
+    state_type acceptingState;
 
 };
-
-}  // namespace helper
-}  // namespace modelchecker
+}  // namespace transformer
 }  // namespace storm

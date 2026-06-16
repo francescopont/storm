@@ -5,6 +5,7 @@
 #include "storm/transformer/DAProduct.h"
 #include "storm/transformer/Product.h"
 #include "storm/transformer/ProductBuilder.h"
+#include "storm/transformer/ProductModel.h"
 
 #include <vector>
 
@@ -28,6 +29,15 @@ class DAProductBuilder {
             product->getProductModel().getNumberOfStates(), [&product](std::size_t prodState) { return product->getAutomatonState(prodState); });
 
         return typename DAProduct<Model>::ptr(new DAProduct<Model>(std::move(*product), prodAcceptance));
+    }
+
+    template<typename Model>
+    static typename ProductModel<Model>::ptr exportProductModel(const typename DAProduct< Model>::ptr product, const storm::storage::BitVector& acceptingStates) {
+        typename ProductModel<Model>::ptr shrinkedModel = ProductBuilder<Model>::shrinkAndExportProductModel(product->getProductModel().getTransitionMatrix(),
+                                                                                                      product->getStatesOfInterest(),
+                                                                                                      product->getProductIndexToProductState(),
+                                                                                                      acceptingStates);
+        return shrinkedModel;
     }
 
     storm::storage::sparse::state_type getInitialState(storm::storage::sparse::state_type modelState) const {

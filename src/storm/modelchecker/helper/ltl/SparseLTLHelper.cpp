@@ -18,6 +18,8 @@
 #include "storm/exceptions/InvalidPropertyException.h"
 #include "storm/exceptions/InvalidModelException.h"
 
+#include "storm/transformer/ProductModel.h"
+
 namespace storm {
 namespace modelchecker {
 namespace helper {
@@ -346,7 +348,7 @@ std::vector<ValueType> SparseLTLHelper<ValueType, Nondeterministic>::computeLTLP
 template<typename ValueType, bool Nondeterministic>
 auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment const& env, storm::logic::PathFormula const& formula,
                                                                      CheckFormulaCallback const& formulaChecker)
-    -> typename ProductModel<productModelType>::ptr {
+    -> typename transformer::ProductModel<productModelType>::ptr {
 
     if (Nondeterministic){
         // Replace state-subformulae by atomic propositions (APs)
@@ -426,10 +428,8 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
                                               product->getProductModel().getTransitionMatrix(),
                                               product->getProductModel().getBackwardTransitions(), product);
 
-
-        return typename ProductModel<productModelType>::ptr(new ProductModel<productModelType>(std::move(product->getProductModel()),
-                                                                                               std::move(product->getProductIndexToProductState()),
-                                                                                               std::move(acceptingStates)));
+        typename transformer::ProductModel<productModelType>::ptr pm = productBuilder.exportProductModel<productModelType>(product, acceptingStates);
+        return pm;
     } else {
         STORM_LOG_THROW(Nondeterministic,
                         storm::exceptions::InvalidModelException,

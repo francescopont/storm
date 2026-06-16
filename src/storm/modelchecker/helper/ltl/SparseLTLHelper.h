@@ -7,7 +7,7 @@
 #include "storm/storage/SparseMatrix.h"
 #include "storm/transformer/DAProductBuilder.h"
 
-#include "storm/modelchecker/helper/ltl/ProductModel.h"
+#include "storm/transformer/ProductModel.h"
 
 namespace storm {
 
@@ -89,9 +89,9 @@ class SparseLTLHelper : public SingleValueModelCheckerHelper<ValueType, storm::m
                                                    std::map<std::string, storm::storage::BitVector>& apSatSets);
 
     /*!
-     * Added procedure to export the product between the MDP and the deterministic automaton for the input LTL formula
+     * Export the product between the MDP and the deterministic automaton for the input LTL formula
      */
-    typename ProductModel<productModelType>::ptr buildProductModel(const Environment &env, const logic::PathFormula &formula,
+    typename storm::transformer::ProductModel<productModelType>::ptr buildProductModel(const Environment &env, const logic::PathFormula &formula,
                                                                                                     CheckFormulaCallback const& formulaChecker);
 
    private:
