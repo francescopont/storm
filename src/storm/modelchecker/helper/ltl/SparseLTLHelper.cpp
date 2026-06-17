@@ -451,6 +451,7 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
         for (auto result : prodNumericResult){
             if (result == storm::utility::zero<ValueType>()){
                 sinkStates.set(state_id);
+                STORM_LOG_ASSERT(!(acceptingStates.get(state_id)), "An accepting state cannot be sink at the same time.");
             }
             state_id++;
         }
