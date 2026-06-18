@@ -170,13 +170,17 @@ class ProductBuilder {
         todo.push_back(t_acc);
 
         // handling the sink state
-        state_type oldSinkIndex = sinkStates.getNextSetIndex(0); // just as a convention
-        product_state_type s_sink = oldProductIndexToProductState.at(oldSinkIndex);
-        productIndexToProductState.push_back(s_sink);
-        state_type sink_state = nextState++;
-        stateRemapping[oldSinkIndex] = sink_state;
-        product_state_type t_err(sink_state, oldSinkIndex);
-        todo.push_back(t_err);
+        bool collapse_sink_states = sinkStates.getNumberOfSetBits() > 0;
+        state_type sink_state;
+        if (collapse_sink_states){
+            state_type oldSinkIndex = sinkStates.getNextSetIndex(0); // just as a convention
+            product_state_type s_sink = oldProductIndexToProductState.at(oldSinkIndex);
+            productIndexToProductState.push_back(s_sink);
+            sink_state = nextState++;
+            stateRemapping[oldSinkIndex] = sink_state;
+            product_state_type t_err(sink_state, oldSinkIndex);
+            todo.push_back(t_err);
+        }
 
         storm::storage::SparseMatrixBuilder<typename Model::ValueType> builder(0, 0, 0, false, deterministic ? false : true, 0);
         std::size_t curRow = 0;
