@@ -402,13 +402,8 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
             statesForAP.push_back(std::move(it->second));
         }
 
-        storm::storage::BitVector statesOfInterest;
-        if (this->hasRelevantStates()) {
-            statesOfInterest = this->getRelevantStates();
-        } else {
-            // Product from all model states
-            statesOfInterest = storm::storage::BitVector(this->_transitionMatrix.getRowGroupCount(), true);
-        }
+        STORM_LOG_ASSERT(this->hasRelevantStates(), "The model has no specified initial state.");
+        storm::storage::BitVector statesOfInterest = this->getRelevantStates();
 
         STORM_LOG_INFO("Building MDP-DA product with deterministic automaton, starting from "
                        << statesOfInterest.getNumberOfSetBits() << " model states...");
@@ -455,6 +450,31 @@ auto SparseLTLHelper<ValueType, Nondeterministic>::buildProductModel(Environment
             }
             state_id++;
         }
+
+        // collapse also states that almost surely satisfy the input formula, even under a worst case scheduler.
+        // Create goal for computeUntilProbabilities, always compute maximizing probabilities
+        storm::solver::SolveGoal<ValueType> solveGoalProductAccept;
+        solveGoalProductAccept = storm::solver::SolveGoal<ValueType>(OptimizationDirection::Maximize);
+        solveGoalProductAccept.setRelevantValues(std::move(soiProduct));
+        MDPSparseModelCheckingHelperReturnType<ValueType> prodCheckResultAccept =
+            storm::modelchecker::helper::SparseMdpPrctlHelper<ValueType>::computeUntilProbabilities(
+                env, std::move(solveGoalProduct), product->getProductModel().getTransitionMatrix(), product->getProductModel().getBackwardTransitions(), bvTrue,
+                sinkStates, // maximize the probability to reach a sink state
+                true, // do a qualitative question?
+                false  // Whether to create memoryless scheduler for the Model-DA Product.
+            );
+        std::vector<ValueType> prodNumericResultAccept;
+        prodNumericResultAccept = std::move(prodCheckResultAccept.values);
+
+        state_id = 0;
+        for (auto result : prodNumericResultAccept){
+            if (result == storm::utility::zero<ValueType>()){
+                acceptingStates.set(state_id);
+                STORM_LOG_ASSERT(!(sinkStates.get(state_id)), "An accepting state cannot be sink at the same time.");
+            }
+            state_id++;
+        }
+
 
         typename transformer::ProductModel<productModelType>::ptr pm = productBuilder.exportProductModel<productModelType>(product, acceptingStates, sinkStates);
         return pm;
